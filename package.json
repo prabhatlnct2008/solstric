@@ -5,9 +5,17 @@
   "main": "index.js",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
+    "postinstall": "prisma generate",
+    "db:push": "npx prisma db push",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "db:seed": "npx tsx -r tsconfig-paths/register prisma/seed.ts",
+    "db:migrate": "npx prisma migrate dev",
+    "db:studio": "npx prisma studio"
+  },
+  "prisma": {
+    "seed": "npx tsx prisma/seed.ts"
   },
   "repository": {
     "type": "git",
@@ -17,7 +25,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "@vercel/postgres": "^0.10.0",
+    "dotenv": "^17.3.1",
     "next": "^16.1.6",
+    "prisma": "^5.22.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },
@@ -29,6 +41,8 @@
     "lucide-react": "^0.577.0",
     "postcss": "^8.5.8",
     "tailwindcss": "^4.2.1",
+    "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
 }

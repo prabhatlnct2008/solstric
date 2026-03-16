@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Save, X, Plus, Trash2, Image as ImageIcon, ArrowLeft } from "lucide-react";
+import { useState, useRef, useCallback } from "react";
+import { Save, X, Plus, Trash2, Image as ImageIcon, ArrowLeft, Upload, Link as LinkIcon, Loader2 } from "lucide-react";
 import Link from "next/link";
+import ImageUploader from "@/components/ImageUploader";
 
 interface ProductImage {
   id: string;
@@ -399,61 +400,34 @@ export default function ProductForm({
                 <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
                   <ImageIcon size={20} /> Hero Image
                 </h3>
-                <div className="flex gap-4 items-start">
-                  {form.hero_image_url && (
-                    <img
-                      src={form.hero_image_url}
-                      alt="Hero"
-                      className="w-32 h-32 rounded-lg object-cover bg-gray-800 border border-gray-700"
-                    />
-                  )}
-                  <div className="flex-1 space-y-2">
-                    <p className="text-sm text-gray-400 break-all">
-                      {form.hero_image_url || "No hero image set"}
-                    </p>
-                    {!isNew && onUpdateHeroImage && (
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={newHeroUrl}
-                          onChange={(e) => setNewHeroUrl(e.target.value)}
-                          placeholder="New hero image URL..."
-                          className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm"
-                        />
-                        <button
-                          onClick={handleUpdateHero}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm"
-                        >
-                          Update
-                        </button>
-                      </div>
-                    )}
-                    {isNew && (
-                      <Field
-                        label=""
-                        value={form.hero_image_url}
-                        onChange={(v) => updateField("hero_image_url", v)}
-                        placeholder="https://example.com/image.jpg"
-                      />
-                    )}
-                  </div>
-                </div>
+                <ImageUploader
+                  productId={form.product_id || undefined}
+                  currentImage={form.hero_image_url || null}
+                  onImageReady={(url) => {
+                    updateField("hero_image_url", url);
+                    if (!isNew && onUpdateHeroImage) {
+                      onUpdateHeroImage(url);
+                    }
+                  }}
+                />
               </div>
 
-              {/* Additional Image URLs */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Field label="Packaging Image URL" value={form.packaging_image_url || ""} onChange={(v) => updateField("packaging_image_url", v || null)} />
-                  {form.packaging_image_url && (
-                    <img src={form.packaging_image_url} alt="Packaging" className="w-20 h-20 mt-2 rounded object-cover bg-gray-800" />
-                  )}
-                </div>
-                <div>
-                  <Field label="Lifestyle Image URL" value={form.lifestyle_image_url || ""} onChange={(v) => updateField("lifestyle_image_url", v || null)} />
-                  {form.lifestyle_image_url && (
-                    <img src={form.lifestyle_image_url} alt="Lifestyle" className="w-20 h-20 mt-2 rounded object-cover bg-gray-800" />
-                  )}
-                </div>
+              {/* Additional Images */}
+              <div className="grid grid-cols-2 gap-6">
+                <ImageUploader
+                  label="Packaging Image"
+                  productId={form.product_id || undefined}
+                  currentImage={form.packaging_image_url}
+                  onImageReady={(url) => updateField("packaging_image_url", url)}
+                  compact
+                />
+                <ImageUploader
+                  label="Lifestyle Image"
+                  productId={form.product_id || undefined}
+                  currentImage={form.lifestyle_image_url}
+                  onImageReady={(url) => updateField("lifestyle_image_url", url)}
+                  compact
+                />
               </div>
 
               {/* Gallery / Carousel Images */}
@@ -488,38 +462,15 @@ export default function ProductForm({
                       </div>
                     ))}
                   </div>
+
+                  {/* Add gallery image - upload or URL */}
                   {onAddImage && (
-                    <div className="flex gap-2 items-end">
-                      <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-300 mb-1">
-                          Image URL
-                        </label>
-                        <input
-                          type="text"
-                          value={newImageUrl}
-                          onChange={(e) => setNewImageUrl(e.target.value)}
-                          placeholder="https://example.com/image.jpg"
-                          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm"
-                        />
-                      </div>
-                      <div className="w-48">
-                        <label className="block text-sm font-medium text-gray-300 mb-1">
-                          Alt Text
-                        </label>
-                        <input
-                          type="text"
-                          value={newImageAlt}
-                          onChange={(e) => setNewImageAlt(e.target.value)}
-                          placeholder="Image description"
-                          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm"
-                        />
-                      </div>
-                      <button
-                        onClick={handleAddImage}
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2.5 rounded-lg flex items-center gap-2 text-sm"
-                      >
-                        <Plus size={16} /> Add
-                      </button>
+                    <div className="space-y-3 bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                      <p className="text-sm font-medium text-gray-300">Add Gallery Image</p>
+                      <GalleryImageAdder
+                        productId={form.product_id || undefined}
+                        onAdd={(url, altText) => onAddImage(url, altText)}
+                      />
                     </div>
                   )}
                 </div>
@@ -611,5 +562,167 @@ function Checkbox({
       />
       <span className="text-sm text-gray-300">{label}</span>
     </label>
+  );
+}
+
+function GalleryImageAdder({
+  productId,
+  onAdd,
+}: {
+  productId?: string;
+  onAdd: (url: string, altText: string) => Promise<void>;
+}) {
+  const [mode, setMode] = useState<"upload" | "url">("upload");
+  const [urlInput, setUrlInput] = useState("");
+  const [altText, setAltText] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleFile(file: File) {
+    setError(null);
+
+    if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)) {
+      setError("Invalid file type. Use JPEG, PNG, WebP, or GIF.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError("File too large. Maximum 5MB.");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      if (productId) formData.append("productId", productId);
+
+      const res = await fetch("/api/upload", { method: "POST", body: formData });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+
+      await onAdd(data.url, altText || file.name.replace(/\.[^.]+$/, ""));
+      setAltText("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleUrlAdd() {
+    const trimmed = urlInput.trim();
+    if (!trimmed) return;
+    setError(null);
+
+    if (!trimmed.startsWith("http://") && !trimmed.startsWith("https://")) {
+      setError("URL must start with http:// or https://");
+      return;
+    }
+
+    await onAdd(trimmed, altText);
+    setUrlInput("");
+    setAltText("");
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Mode toggle */}
+      <div className="flex gap-1 bg-gray-800 rounded-lg p-0.5 w-fit">
+        <button
+          type="button"
+          onClick={() => setMode("upload")}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
+            mode === "upload" ? "bg-gray-600 text-white" : "text-gray-400 hover:text-gray-200"
+          }`}
+        >
+          <Upload size={13} /> Upload File
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("url")}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition ${
+            mode === "url" ? "bg-gray-600 text-white" : "text-gray-400 hover:text-gray-200"
+          }`}
+        >
+          <LinkIcon size={13} /> Paste URL
+        </button>
+      </div>
+
+      <div className="flex gap-2 items-end">
+        {mode === "upload" ? (
+          <div className="flex-1">
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const file = e.dataTransfer.files[0];
+                if (file) handleFile(file);
+              }}
+              onDragOver={(e) => e.preventDefault()}
+              className="border-2 border-dashed border-gray-700 hover:border-gray-500 rounded-lg p-3 text-center cursor-pointer bg-gray-800/50 transition"
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleFile(file);
+                  e.target.value = "";
+                }}
+              />
+              {uploading ? (
+                <div className="flex items-center justify-center gap-2 text-gray-400">
+                  <Loader2 size={16} className="animate-spin" /> Uploading...
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2 text-gray-400 text-sm">
+                  <Upload size={16} /> Click or drag to upload (max 5MB)
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1">
+            <input
+              type="text"
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleUrlAdd()}
+              placeholder="https://example.com/image.jpg"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-blue-500"
+            />
+          </div>
+        )}
+        <div className="w-40">
+          <input
+            type="text"
+            value={altText}
+            onChange={(e) => setAltText(e.target.value)}
+            placeholder="Alt text"
+            className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-blue-500"
+          />
+        </div>
+        {mode === "url" && (
+          <button
+            type="button"
+            onClick={handleUrlAdd}
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm"
+          >
+            <Plus size={16} /> Add
+          </button>
+        )}
+      </div>
+
+      {error && (
+        <p className="text-red-400 text-sm flex items-center gap-1">
+          <X size={14} /> {error}
+        </p>
+      )}
+    </div>
   );
 }

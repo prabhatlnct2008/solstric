@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
+import { put } from "@vercel/blob";
 import { randomUUID } from "crypto";
+import path from "path";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
@@ -30,24 +30,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Build directory: /public/images/products/{productId}/ or /public/images/products/general/
+    // Build path: products/{productId}/{uuid}.ext
     const folder = productId || "general";
-    const dirPath = path.join(process.cwd(), "public", "images", "products", folder);
-    await mkdir(dirPath, { recursive: true });
-
-    // Generate unique filename
     const ext = path.extname(file.name) || `.${file.type.split("/")[1]}`;
-    const filename = `${randomUUID()}${ext}`;
-    const filePath = path.join(dirPath, filename);
+    const blobPath = `products/${folder}/${randomUUID()}${ext}`;
 
-    // Write file
-    const bytes = await file.arrayBuffer();
-    await writeFile(filePath, Buffer.from(bytes));
+    // Upload to Vercel Blob
+    const blob = await put(blobPath, file, {
+      access: "public",
+      addRandomSuffix: false,
+    });
 
-    // Return the public URL path
-    const url = `/images/products/${folder}/${filename}`;
-
-    return NextResponse.json({ url, filename });
+    return NextResponse.json({ url: blob.url, filename: blobPath });
   } catch (error) {
     console.error("Upload error:", error);
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });

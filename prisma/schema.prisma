@@ -1,11 +1,11 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../node_modules/.prisma/client"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Product {
@@ -20,11 +20,11 @@ model Product {
   product_type      String   @default("single")
   short_title       String
   short_description String
-  long_description  String
+  long_description  String   @db.Text
   best_for          String
-  use_cases         String   // JSON array stored as string
-  suitable_for_locations String // JSON array
-  tags              String   // JSON array
+  use_cases         String   @db.Text // JSON array stored as string
+  suitable_for_locations String @db.Text // JSON array
+  tags              String   @db.Text // JSON array
   price_mode        String   @default("fixed")
   price_display     String
   mrp               Float?
@@ -43,21 +43,21 @@ model Product {
   packaging_image_url String?
   lifestyle_image_url String?
   spec_sheet_image_url String?
-  whatsapp_message_template String
+  whatsapp_message_template String @db.Text
   enquiry_mode      String   @default("order")
   supports_bulk_order Boolean @default(false)
   supports_retail_order Boolean @default(true)
   requires_callback Boolean  @default(false)
   seo_title         String
-  seo_meta_description String
+  seo_meta_description String @db.Text
   canonical_url     String?
-  key_features      String   // JSON array
-  specifications    String   // JSON object
-  whats_in_box      String?  // JSON array
-  faqs              String   // JSON array of {question, answer}
-  related_product_ids String // JSON array
-  badges            String   // JSON array
-  not_ideal_for     String?  // JSON array
+  key_features      String   @db.Text // JSON array
+  specifications    String   @db.Text // JSON object
+  whats_in_box      String?  @db.Text // JSON array
+  faqs              String   @db.Text // JSON array of {question, answer}
+  related_product_ids String @db.Text // JSON array
+  badges            String   @db.Text // JSON array
+  not_ideal_for     String?  @db.Text // JSON array
   rating            Float?
   review_count      Int?
   created_at        DateTime @default(now())

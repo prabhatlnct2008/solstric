@@ -3,8 +3,8 @@ import type { SiteConfig } from "@/types";
 export const siteConfig: SiteConfig = {
   site_name: "Solstric",
   tagline: "Alternative Kitchens & Energy Resilience",
-  whatsapp_number: "919999999999",
-  phone_number: "+91 99999 99999",
+  whatsapp_number: "918882567801",
+  phone_number: "+91 88825 67801",
   email: "hello@solstric.in",
   address: "New Delhi, India",
   social: {

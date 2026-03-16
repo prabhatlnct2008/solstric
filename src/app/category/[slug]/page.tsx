@@ -3,7 +3,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { MessageCircle, Filter, ArrowRight, ChevronRight } from "lucide-react";
 import { categories, getCategoryBySlug } from "@/data/categories";
-import { getProductsByCategory } from "@/data/products";
+import { getDbProductsByCategory } from "@/lib/products-db";
+
+export const dynamic = "force-dynamic";
 import ProductCard from "@/components/product/ProductCard";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import WhatsAppCTA from "@/components/ui/WhatsAppCTA";
@@ -35,7 +37,7 @@ export default async function CategoryPage({ params }: Props) {
   const category = getCategoryBySlug(slug);
   if (!category) notFound();
 
-  const products = getProductsByCategory(slug);
+  const products = await getDbProductsByCategory(slug);
 
   const jsonLd = {
     "@context": "https://schema.org",

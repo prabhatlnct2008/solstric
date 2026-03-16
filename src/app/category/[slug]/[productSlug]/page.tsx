@@ -14,7 +14,9 @@ import {
   MessageCircle,
   Phone,
 } from "lucide-react";
-import { products, getProductBySlug, getProductById } from "@/data/products";
+import { getDbProductBySlug, getDbProductById } from "@/lib/products-db";
+
+export const dynamic = "force-dynamic";
 import { getCategoryBySlug } from "@/data/categories";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import WhatsAppCTA from "@/components/ui/WhatsAppCTA";
@@ -26,16 +28,9 @@ interface Props {
   params: Promise<{ slug: string; productSlug: string }>;
 }
 
-export async function generateStaticParams() {
-  return products.map((p) => ({
-    slug: p.category_slug,
-    productSlug: p.slug,
-  }));
-}
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { productSlug } = await params;
-  const product = getProductBySlug(productSlug);
+  const product = await getDbProductBySlug(productSlug);
   if (!product) return {};
   return {
     title: product.seo_title,
@@ -50,14 +45,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProductPage({ params }: Props) {
   const { slug, productSlug } = await params;
-  const product = getProductBySlug(productSlug);
+  const product = await getDbProductBySlug(productSlug);
   if (!product || product.category_slug !== slug) notFound();
 
   const category = getCategoryBySlug(slug);
-  const relatedProducts = product.related_product_ids
-    .map((id) => getProductById(id))
-    .filter(Boolean)
-    .slice(0, 4);
+  const relatedResults = await Promise.all(
+    product.related_product_ids.map((id) => getDbProductById(id))
+  );
+  const relatedProducts = relatedResults.filter(Boolean).slice(0, 4);
 
   const discount =
     product.mrp && product.sale_price

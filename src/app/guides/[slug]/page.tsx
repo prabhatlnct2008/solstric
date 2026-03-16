@@ -3,8 +3,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Clock, ArrowLeft, ChevronRight } from "lucide-react";
 import { guides, getGuideBySlug } from "@/data/guides";
-import { getProductById } from "@/data/products";
+import { getDbProductById } from "@/lib/products-db";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
+
+export const dynamic = "force-dynamic";
 import WhatsAppCTA from "@/components/ui/WhatsAppCTA";
 import ProductCard from "@/components/product/ProductCard";
 
@@ -32,9 +34,10 @@ export default async function GuidePage({ params }: Props) {
   const guide = getGuideBySlug(slug);
   if (!guide) notFound();
 
-  const relatedProducts = guide.related_product_ids
-    .map((id) => getProductById(id))
-    .filter(Boolean);
+  const relatedResults = await Promise.all(
+    guide.related_product_ids.map((id) => getDbProductById(id))
+  );
+  const relatedProducts = relatedResults.filter(Boolean);
 
   const relatedGuides = guide.related_guide_slugs
     .map((s) => getGuideBySlug(s))

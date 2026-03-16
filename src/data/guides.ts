@@ -594,15 +594,26 @@ Use only PESO-approved cylinders/canisters and BIS-marked hoses/regulators at ho
 
 ## Sources
 
-- PESO (Petroleum and Explosives Safety Organisation)
-- PNGRB (Petroleum and Natural Gas Regulatory Board)
-- Bureau of Indian Standards (BIS)
-- Bureau of Energy Efficiency (BEE)
-- NDMA (National Disaster Management Authority)
-- IndianOil (Indane), Bharat Petroleum (Bharatgas), Hindustan Petroleum (HP Gas)
-- Indraprastha Gas Limited (IGL), Mahanagar Gas Limited (MGL), Adani Total Gas, Gujarat Gas
-- Central Electricity Authority (CEA)
-- Prayas Energy Group, CEEW, RMI India, Centre for Science and Environment (CSE)
+- PESO – Petroleum and Explosives Safety Organisation: https://peso.gov.in
+- PNGRB – Petroleum and Natural Gas Regulatory Board: https://www.pngrb.gov.in
+- Bureau of Indian Standards (BIS): https://www.bis.gov.in
+- Bureau of Energy Efficiency (BEE): https://beeindia.gov.in
+- NDMA – National Disaster Management Authority (home and kitchen fire safety): https://ndma.gov.in
+- IndianOil (Indane) – LPG Services: https://iocl.com
+- Bharat Petroleum (Bharatgas) – LPG: https://www.bharatpetroleum.in
+- Hindustan Petroleum (HP Gas) – LPG: https://www.hindustanpetroleum.com
+- Indraprastha Gas Limited (IGL) – PNG: https://www.iglonline.net
+- Mahanagar Gas Limited (MGL) – PNG: https://www.mahanagargas.com
+- Adani Total Gas – PNG: https://www.adanigas.com
+- Gujarat Gas – PNG: https://www.gujaratgas.com
+- Central Electricity Authority (gateway to DISCOM tariffs): https://cea.nic.in
+- Time Technoplast – LiteSafe Composite Cylinders: https://www.timetechnoplast.com
+- Iwatani – Cassette Gas Stoves and Cartridges (manufacturer guidance): https://www.iwatani.com
+- Prayas Energy Group – Cooking energy studies: https://www.prayaspune.org/peg
+- Council on Energy, Environment and Water (CEEW) – Clean cooking research: https://www.ceew.in
+- RMI India – Electric cooking and distributed energy: https://rmi.org/india
+- Centre for Science and Environment (CSE) – Clean cooking and air quality: https://www.cseindia.org
+- OMC Distributor Locators and consumer info: https://www.mylpg.in
     `.trim(),
     author: "Solstric Team",
     published_date: "2026-03-16",

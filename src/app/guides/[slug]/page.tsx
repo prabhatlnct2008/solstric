@@ -29,6 +29,116 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+function renderInline(text: string): string {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>")
+    .replace(/`(.+?)`/g, '<code class="bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded text-sm font-mono">$1</code>');
+}
+
+function renderMarkdownContent(content: string) {
+  const lines = content.split("\n");
+  const elements: React.ReactNode[] = [];
+  let i = 0;
+  let key = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Blank line — skip (spacing handled by element margins)
+    if (line.trim() === "") { i++; continue; }
+
+    // Horizontal rule
+    if (line.trim() === "---") {
+      elements.push(<hr key={key++} className="my-10 border-gray-200" />);
+      i++; continue;
+    }
+
+    // H2
+    if (line.startsWith("## ")) {
+      elements.push(<h2 key={key++} className="text-2xl font-bold text-gray-900 mt-10 mb-4">{line.slice(3)}</h2>);
+      i++; continue;
+    }
+
+    // H3
+    if (line.startsWith("### ")) {
+      elements.push(<h3 key={key++} className="text-xl font-semibold text-gray-900 mt-8 mb-3">{line.slice(4)}</h3>);
+      i++; continue;
+    }
+
+    // Unordered list — group consecutive "- " lines
+    if (line.startsWith("- ")) {
+      const items: string[] = [];
+      while (i < lines.length && lines[i].startsWith("- ")) {
+        items.push(lines[i].slice(2));
+        i++;
+      }
+      elements.push(
+        <ul key={key++} className="list-disc pl-6 my-4 space-y-2">
+          {items.map((item, j) => (
+            <li key={j} className="text-gray-600 leading-relaxed" dangerouslySetInnerHTML={{ __html: renderInline(item) }} />
+          ))}
+        </ul>
+      );
+      continue;
+    }
+
+    // Ordered list — group consecutive numbered lines
+    if (/^\d+\.\s/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^\d+\.\s/.test(lines[i])) {
+        items.push(lines[i].replace(/^\d+\.\s/, ""));
+        i++;
+      }
+      elements.push(
+        <ol key={key++} className="list-decimal pl-6 my-4 space-y-2">
+          {items.map((item, j) => (
+            <li key={j} className="text-gray-600 leading-relaxed" dangerouslySetInnerHTML={{ __html: renderInline(item) }} />
+          ))}
+        </ol>
+      );
+      continue;
+    }
+
+    // Table rows — skip header separator, group into table
+    if (line.startsWith("|")) {
+      const rows: string[] = [];
+      while (i < lines.length && lines[i].startsWith("|")) {
+        if (!lines[i].match(/^\|[-\s|]+\|$/)) rows.push(lines[i]);
+        i++;
+      }
+      if (rows.length > 0) {
+        const headerCells = rows[0].split("|").filter(c => c.trim()).map(c => c.trim());
+        const bodyRows = rows.slice(1);
+        elements.push(
+          <div key={key++} className="overflow-x-auto my-6">
+            <table className="w-full text-sm border border-gray-200 rounded-lg">
+              <thead className="bg-gray-50">
+                <tr>{headerCells.map((c, j) => <th key={j} className="px-4 py-3 text-left font-semibold text-gray-900 border-b border-gray-200">{c}</th>)}</tr>
+              </thead>
+              <tbody>
+                {bodyRows.map((row, ri) => {
+                  const cells = row.split("|").filter(c => c.trim()).map(c => c.trim());
+                  return <tr key={ri} className="border-b border-gray-100"><td className="px-4 py-2.5 text-gray-600">{cells[0]}</td>{cells.slice(1).map((c, ci) => <td key={ci} className="px-4 py-2.5 text-gray-600">{c}</td>)}</tr>;
+                })}
+              </tbody>
+            </table>
+          </div>
+        );
+      }
+      continue;
+    }
+
+    // Paragraph
+    elements.push(
+      <p key={key++} className="text-gray-600 leading-relaxed mb-4" dangerouslySetInnerHTML={{ __html: renderInline(line) }} />
+    );
+    i++;
+  }
+
+  return elements;
+}
+
 export default async function GuidePage({ params }: Props) {
   const { slug } = await params;
   const guide = getGuideBySlug(slug);
@@ -79,16 +189,8 @@ export default async function GuidePage({ params }: Props) {
           </header>
 
           {/* Content */}
-          <div className="prose prose-gray prose-headings:text-gray-900 prose-a:text-brand-green max-w-none">
-            {guide.content.split("\n").map((line, i) => {
-              if (line.startsWith("## ")) return <h2 key={i} className="text-2xl font-bold text-gray-900 mt-8 mb-4">{line.replace("## ", "")}</h2>;
-              if (line.startsWith("### ")) return <h3 key={i} className="text-lg font-semibold text-gray-900 mt-6 mb-3">{line.replace("### ", "")}</h3>;
-              if (line.startsWith("- ")) return <li key={i} className="text-gray-600 ml-4">{line.replace("- ", "")}</li>;
-              if (line.startsWith("**") && line.endsWith("**")) return <p key={i} className="font-semibold text-gray-900 mt-4">{line.replace(/\*\*/g, "")}</p>;
-              if (line.startsWith("|")) return null; // Skip table formatting for now
-              if (line.trim() === "") return <br key={i} />;
-              return <p key={i} className="text-gray-600 leading-relaxed mb-3">{line}</p>;
-            })}
+          <div className="max-w-none">
+            {renderMarkdownContent(guide.content)}
           </div>
 
           {/* Mid-article CTA */}

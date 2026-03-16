@@ -20,7 +20,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { categories } from "@/data/categories";
-import { getHomepageProducts, getFeaturedProducts } from "@/data/products";
+import { getDbHomepageProducts, getDbFeaturedProducts } from "@/lib/products-db";
 import ProductCard from "@/components/product/ProductCard";
 import WhatsAppCTA from "@/components/ui/WhatsAppCTA";
 
@@ -32,9 +32,11 @@ const iconMap: Record<string, React.ReactNode> = {
   Package: <Package className="w-6 h-6" />,
 };
 
-export default function HomePage() {
-  const homepageProducts = getHomepageProducts();
-  const featuredProducts = getFeaturedProducts();
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const homepageProducts = await getDbHomepageProducts();
+  const featuredProducts = await getDbFeaturedProducts();
 
   return (
     <>

@@ -3,8 +3,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { MapPin, ChevronRight } from "lucide-react";
 import { cityPages, getCityPage } from "@/data/city-pages";
-import { getProductById } from "@/data/products";
+import { getDbProductById } from "@/lib/products-db";
 import { getCategoryBySlug } from "@/data/categories";
+
+export const dynamic = "force-dynamic";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import WhatsAppCTA from "@/components/ui/WhatsAppCTA";
 import ProductCard from "@/components/product/ProductCard";
@@ -29,7 +31,10 @@ export default async function CityTopicPage({ params }: Props) {
   const page = getCityPage(city, topic);
   if (!page) notFound();
 
-  const featuredProducts = page.featured_product_ids.map((id) => getProductById(id)).filter(Boolean);
+  const featuredResults = await Promise.all(
+    page.featured_product_ids.map((id) => getDbProductById(id))
+  );
+  const featuredProducts = featuredResults.filter(Boolean);
   const relatedCategories = page.related_category_slugs.map((s) => getCategoryBySlug(s)).filter(Boolean);
 
   return (

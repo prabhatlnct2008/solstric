@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Package, CheckCircle, MapPin, ArrowRight, ChevronRight, Users, TrendingUp, Truck } from "lucide-react";
 import Breadcrumbs from "@/components/ui/Breadcrumbs";
 import WhatsAppCTA from "@/components/ui/WhatsAppCTA";
-import { products } from "@/data/products";
+import { getDbBulkProducts } from "@/lib/products-db";
 import ProductCard from "@/components/product/ProductCard";
 
 export const metadata: Metadata = {
@@ -11,8 +11,10 @@ export const metadata: Metadata = {
   description: "Become a Solstric dealer. Bulk kitchen appliances, smokeless stoves & solar products. Starter packs from 10 units. 15-30% margins. WhatsApp to order.",
 };
 
-export default function BulkOrdersPage() {
-  const bulkProducts = products.filter((p) => p.show_on_bulk_page && p.is_active);
+export const dynamic = "force-dynamic";
+
+export default async function BulkOrdersPage() {
+  const bulkProducts = await getDbBulkProducts();
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6">

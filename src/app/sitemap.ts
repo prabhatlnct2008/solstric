@@ -1,10 +1,12 @@
 import type { MetadataRoute } from "next";
-import { products } from "@/data/products";
+import { getDbProducts } from "@/lib/products-db";
+
+export const dynamic = "force-dynamic";
 import { categories } from "@/data/categories";
 import { guides } from "@/data/guides";
 import { cityPages } from "@/data/city-pages";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = "https://solstric.in";
 
   const staticPages = [
@@ -28,9 +30,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.9,
   }));
 
-  const productPages = products
-    .filter((p) => p.is_active)
-    .map((p) => ({
+  const products = await getDbProducts();
+  const productPages = products.map((p) => ({
       url: `${baseUrl}/category/${p.category_slug}/${p.slug}`,
       lastModified: new Date(),
       changeFrequency: "weekly" as const,

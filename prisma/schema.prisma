@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id                String   @id @default(cuid())
+  product_id        String   @unique
+  sku               String   @unique
+  product_name      String
+  slug              String   @unique
+  category          String
+  category_slug     String
+  subcategory       String
+  product_type      String   @default("single")
+  short_title       String
+  short_description String
+  long_description  String
+  best_for          String
+  use_cases         String   // JSON array stored as string
+  suitable_for_locations String // JSON array
+  tags              String   // JSON array
+  price_mode        String   @default("fixed")
+  price_display     String
+  mrp               Float?
+  sale_price        Float?
+  bulk_price_note   String?
+  moq               Int?
+  is_active         Boolean  @default(true)
+  is_featured       Boolean  @default(false)
+  show_on_homepage  Boolean  @default(false)
+  show_on_category_page Boolean @default(true)
+  show_on_bulk_page Boolean  @default(false)
+  show_in_trending  Boolean  @default(false)
+  show_in_city_pages Boolean @default(false)
+  priority_rank     Int      @default(10)
+  hero_image_url    String
+  packaging_image_url String?
+  lifestyle_image_url String?
+  spec_sheet_image_url String?
+  whatsapp_message_template String
+  enquiry_mode      String   @default("order")
+  supports_bulk_order Boolean @default(false)
+  supports_retail_order Boolean @default(true)
+  requires_callback Boolean  @default(false)
+  seo_title         String
+  seo_meta_description String
+  canonical_url     String?
+  key_features      String   // JSON array
+  specifications    String   // JSON object
+  whats_in_box      String?  // JSON array
+  faqs              String   // JSON array of {question, answer}
+  related_product_ids String // JSON array
+  badges            String   // JSON array
+  not_ideal_for     String?  // JSON array
+  rating            Float?
+  review_count      Int?
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  images            ProductImage[]
+}
+
+model ProductImage {
+  id         String   @id @default(cuid())
+  product_id String
+  url        String
+  alt_text   String?
+  sort_order Int      @default(0)
+  created_at DateTime @default(now())
+
+  product    Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@index([product_id])
+}

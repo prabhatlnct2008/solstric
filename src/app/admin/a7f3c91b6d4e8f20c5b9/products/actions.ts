@@ -152,22 +152,37 @@ export async function addProductImage(productId: string, url: string, altText?: 
       sort_order: (maxOrder?.sort_order ?? -1) + 1,
     },
   });
+  const product = await prisma.product.findUnique({ where: { id: productId } });
   revalidatePath("/admin/a7f3c91b6d4e8f20c5b9/products");
+  if (product) {
+    revalidatePath(`/category/${product.category_slug}`);
+    revalidatePath(`/category/${product.category_slug}/${product.slug}`);
+    revalidatePath("/");
+  }
   return image;
 }
 
 export async function deleteProductImage(imageId: string) {
+  const image = await prisma.productImage.findUnique({ where: { id: imageId }, include: { product: true } });
   await prisma.productImage.delete({ where: { id: imageId } });
   revalidatePath("/admin/a7f3c91b6d4e8f20c5b9/products");
+  if (image?.product) {
+    revalidatePath(`/category/${image.product.category_slug}`);
+    revalidatePath(`/category/${image.product.category_slug}/${image.product.slug}`);
+    revalidatePath("/");
+  }
   return { success: true };
 }
 
 export async function updateHeroImage(productId: string, url: string) {
-  await prisma.product.update({
+  const product = await prisma.product.update({
     where: { id: productId },
     data: { hero_image_url: url },
   });
   revalidatePath("/admin/a7f3c91b6d4e8f20c5b9/products");
+  revalidatePath(`/category/${product.category_slug}`);
+  revalidatePath(`/category/${product.category_slug}/${product.slug}`);
+  revalidatePath("/");
   return { success: true };
 }
 

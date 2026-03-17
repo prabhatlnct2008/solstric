@@ -19,6 +19,7 @@ export default function ProductGallery({ images, productName }: ProductGalleryPr
           src={images[selectedIndex] || images[0]}
           alt={`${productName} - Image ${selectedIndex + 1}`}
           fill
+          unoptimized
           className="object-contain p-6"
           sizes="(max-width: 1024px) 100vw, 50vw"
           priority
@@ -40,6 +41,7 @@ export default function ProductGallery({ images, productName }: ProductGalleryPr
                 src={img}
                 alt={`${productName} thumbnail ${i + 1}`}
                 fill
+                unoptimized
                 className="object-contain p-1"
                 sizes="80px"
               />

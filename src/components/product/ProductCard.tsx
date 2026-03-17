@@ -20,6 +20,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           src={product.gallery_images?.[0] || product.hero_image_url}
           alt={product.product_name}
           fill
+          unoptimized
           className="object-contain p-4 group-hover:scale-105 transition-transform duration-300"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
         />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Save, X, Plus, Trash2, Image as ImageIcon, ArrowLeft, Upload, Link as LinkIcon, Loader2 } from "lucide-react";
 import Link from "next/link";
 import ImageUploader from "@/components/ImageUploader";
@@ -152,6 +152,18 @@ export default function ProductForm({
   const [newImageUrl, setNewImageUrl] = useState("");
   const [newImageAlt, setNewImageAlt] = useState("");
   const [newHeroUrl, setNewHeroUrl] = useState("");
+
+  // Sync images and hero_image_url from parent when product prop changes (after add/delete)
+  useEffect(() => {
+    if (product) {
+      setForm((prev) => ({
+        ...prev,
+        images: product.images,
+        hero_image_url: product.hero_image_url,
+      }));
+      console.log("[ProductForm] Synced from props — images:", product.images?.length, "hero:", product.hero_image_url);
+    }
+  }, [product]);
 
   function updateField(field: string, value: unknown) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -449,7 +461,10 @@ export default function ProductForm({
                         />
                         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                           <button
-                            onClick={() => onDeleteImage?.(img.id)}
+                            onClick={() => {
+                              console.log("[ProductForm] Deleting gallery image:", img.id, img.url);
+                              onDeleteImage?.(img.id);
+                            }}
                             className="p-2 bg-red-600 rounded-full text-white hover:bg-red-700"
                             title="Delete image"
                           >
@@ -581,6 +596,7 @@ function GalleryImageAdder({
 
   async function handleFile(file: File) {
     setError(null);
+    console.log("[GalleryImageAdder] handleFile — name:", file.name, "type:", file.type, "size:", file.size, "productId:", productId);
 
     if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)) {
       setError("Invalid file type. Use JPEG, PNG, WebP, or GIF.");
@@ -598,14 +614,20 @@ function GalleryImageAdder({
       formData.append("file", file);
       if (productId) formData.append("productId", productId);
 
+      console.log("[GalleryImageAdder] Uploading to /api/upload...");
       const res = await fetch("/api/upload", { method: "POST", body: formData });
       const data = await res.json();
+      console.log("[GalleryImageAdder] Upload response:", res.status, data);
 
       if (!res.ok) throw new Error(data.error || "Upload failed");
 
-      await onAdd(data.url, altText || file.name.replace(/\.[^.]+$/, ""));
+      const imageAlt = altText || file.name.replace(/\.[^.]+$/, "");
+      console.log("[GalleryImageAdder] Calling onAdd — url:", data.url, "alt:", imageAlt);
+      await onAdd(data.url, imageAlt);
+      console.log("[GalleryImageAdder] onAdd completed successfully");
       setAltText("");
     } catch (err) {
+      console.error("[GalleryImageAdder] Error:", err);
       setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
@@ -622,9 +644,16 @@ function GalleryImageAdder({
       return;
     }
 
-    await onAdd(trimmed, altText);
-    setUrlInput("");
-    setAltText("");
+    console.log("[GalleryImageAdder] handleUrlAdd — url:", trimmed, "alt:", altText);
+    try {
+      await onAdd(trimmed, altText);
+      console.log("[GalleryImageAdder] URL add completed successfully");
+      setUrlInput("");
+      setAltText("");
+    } catch (err) {
+      console.error("[GalleryImageAdder] URL add error:", err);
+      setError(err instanceof Error ? err.message : "Failed to add image");
+    }
   }
 
   return (

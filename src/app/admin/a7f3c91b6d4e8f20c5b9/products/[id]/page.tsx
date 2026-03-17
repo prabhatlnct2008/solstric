@@ -22,11 +22,14 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   }, [id]);
 
   async function loadProduct() {
+    console.log("[EditPage] Loading product:", id);
     const data = await getProductById(id);
     if (!data) {
+      console.warn("[EditPage] Product not found, redirecting");
       router.push("/admin/a7f3c91b6d4e8f20c5b9/products");
       return;
     }
+    console.log("[EditPage] Loaded product:", data.product_name, "— images:", (data as Record<string, unknown> & { images?: unknown[] }).images?.length ?? 0);
     setProduct(data as unknown as Record<string, unknown>);
     setLoading(false);
   }
@@ -36,16 +39,31 @@ export default function EditProductPage({ params }: { params: Promise<{ id: stri
   }
 
   async function handleAddImage(url: string, altText: string) {
-    await addProductImage(id, url, altText);
-    await loadProduct();
+    console.log("[EditPage] handleAddImage — url:", url, "altText:", altText, "productId (cuid):", id);
+    try {
+      await addProductImage(id, url, altText);
+      console.log("[EditPage] addProductImage succeeded, reloading...");
+      await loadProduct();
+    } catch (error) {
+      console.error("[EditPage] handleAddImage error:", error);
+      throw error;
+    }
   }
 
   async function handleDeleteImage(imageId: string) {
-    await deleteProductImage(imageId);
-    await loadProduct();
+    console.log("[EditPage] handleDeleteImage — imageId:", imageId);
+    try {
+      await deleteProductImage(imageId);
+      console.log("[EditPage] deleteProductImage succeeded, reloading...");
+      await loadProduct();
+    } catch (error) {
+      console.error("[EditPage] handleDeleteImage error:", error);
+      throw error;
+    }
   }
 
   async function handleUpdateHero(url: string) {
+    console.log("[EditPage] handleUpdateHero — url:", url);
     await updateHeroImage(id, url);
     await loadProduct();
   }

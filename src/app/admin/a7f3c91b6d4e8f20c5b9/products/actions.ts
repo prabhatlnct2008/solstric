@@ -11,10 +11,13 @@ export async function getProducts() {
 }
 
 export async function getProductById(id: string) {
-  return prisma.product.findUnique({
+  console.log("[getProductById] Fetching product:", id);
+  const product = await prisma.product.findUnique({
     where: { id },
     include: { images: { orderBy: { sort_order: "asc" } } },
   });
+  console.log("[getProductById] Found:", product?.product_name, "— images:", product?.images?.length ?? 0);
+  return product;
 }
 
 export async function updateProduct(id: string, data: Record<string, unknown>) {
@@ -140,50 +143,81 @@ export async function deleteProduct(id: string) {
 }
 
 export async function addProductImage(productId: string, url: string, altText?: string) {
-  const maxOrder = await prisma.productImage.findFirst({
-    where: { product_id: productId },
-    orderBy: { sort_order: "desc" },
-  });
-  const image = await prisma.productImage.create({
-    data: {
-      product_id: productId,
-      url,
-      alt_text: altText || null,
-      sort_order: (maxOrder?.sort_order ?? -1) + 1,
-    },
-  });
-  const product = await prisma.product.findUnique({ where: { id: productId } });
-  revalidatePath("/admin/a7f3c91b6d4e8f20c5b9/products");
-  if (product) {
-    revalidatePath(`/category/${product.category_slug}`);
-    revalidatePath(`/category/${product.category_slug}/${product.slug}`);
-    revalidatePath("/");
+  console.log("[addProductImage] Adding image — productId:", productId, "url:", url, "altText:", altText);
+  try {
+    const maxOrder = await prisma.productImage.findFirst({
+      where: { product_id: productId },
+      orderBy: { sort_order: "desc" },
+    });
+    console.log("[addProductImage] Current max sort_order:", maxOrder?.sort_order ?? "none");
+
+    const image = await prisma.productImage.create({
+      data: {
+        product_id: productId,
+        url,
+        alt_text: altText || null,
+        sort_order: (maxOrder?.sort_order ?? -1) + 1,
+      },
+    });
+    console.log("[addProductImage] Created image record:", image.id, "sort_order:", image.sort_order);
+
+    const product = await prisma.product.findUnique({ where: { id: productId } });
+    revalidatePath("/admin/a7f3c91b6d4e8f20c5b9/products");
+    if (product) {
+      revalidatePath(`/category/${product.category_slug}`);
+      revalidatePath(`/category/${product.category_slug}/${product.slug}`);
+      revalidatePath("/");
+    }
+    return image;
+  } catch (error) {
+    console.error("[addProductImage] Error:", error);
+    throw error;
   }
-  return image;
 }
 
 export async function deleteProductImage(imageId: string) {
-  const image = await prisma.productImage.findUnique({ where: { id: imageId }, include: { product: true } });
-  await prisma.productImage.delete({ where: { id: imageId } });
-  revalidatePath("/admin/a7f3c91b6d4e8f20c5b9/products");
-  if (image?.product) {
-    revalidatePath(`/category/${image.product.category_slug}`);
-    revalidatePath(`/category/${image.product.category_slug}/${image.product.slug}`);
-    revalidatePath("/");
+  console.log("[deleteProductImage] Deleting image:", imageId);
+  try {
+    const image = await prisma.productImage.findUnique({ where: { id: imageId }, include: { product: true } });
+    if (!image) {
+      console.warn("[deleteProductImage] Image not found:", imageId);
+      return { success: false, error: "Image not found" };
+    }
+    console.log("[deleteProductImage] Found image — url:", image.url, "product:", image.product?.product_name);
+
+    await prisma.productImage.delete({ where: { id: imageId } });
+    console.log("[deleteProductImage] Deleted successfully");
+
+    revalidatePath("/admin/a7f3c91b6d4e8f20c5b9/products");
+    if (image.product) {
+      revalidatePath(`/category/${image.product.category_slug}`);
+      revalidatePath(`/category/${image.product.category_slug}/${image.product.slug}`);
+      revalidatePath("/");
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("[deleteProductImage] Error:", error);
+    throw error;
   }
-  return { success: true };
 }
 
 export async function updateHeroImage(productId: string, url: string) {
-  const product = await prisma.product.update({
-    where: { id: productId },
-    data: { hero_image_url: url },
-  });
-  revalidatePath("/admin/a7f3c91b6d4e8f20c5b9/products");
-  revalidatePath(`/category/${product.category_slug}`);
-  revalidatePath(`/category/${product.category_slug}/${product.slug}`);
-  revalidatePath("/");
-  return { success: true };
+  console.log("[updateHeroImage] Updating — productId:", productId, "url:", url);
+  try {
+    const product = await prisma.product.update({
+      where: { id: productId },
+      data: { hero_image_url: url },
+    });
+    console.log("[updateHeroImage] Updated successfully for:", product.product_name);
+    revalidatePath("/admin/a7f3c91b6d4e8f20c5b9/products");
+    revalidatePath(`/category/${product.category_slug}`);
+    revalidatePath(`/category/${product.category_slug}/${product.slug}`);
+    revalidatePath("/");
+    return { success: true };
+  } catch (error) {
+    console.error("[updateHeroImage] Error:", error);
+    throw error;
+  }
 }
 
 export async function reorderImages(imageIds: string[]) {
